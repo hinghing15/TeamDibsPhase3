@@ -109,7 +109,7 @@ public class UserOptions
         		 recordRide();
         		 break;
         	 case 5: //Favorite a car
-        		 if(miscH.printUC())
+        		 miscH.printUC();
         		 {
         			 printFavorites();
         			try {
@@ -133,12 +133,51 @@ public class UserOptions
         		 }
         		 break;
         	 case 6: //Review a car
-        		 if(miscH.printUC())
+        		 miscH.printUC();
         			 reviewUC();
         		 break;
         	 case 7: //Review a feedback record
-        		 if(miscH.printUC())
-        			 rateFBUsefulness();
+        		 miscH.printUC();
+        		 try {
+        			String vin = null;
+        			String fid = null;
+        			String rating = null;
+        			String answer = null;
+        			System.out.println("Type in the vin of the vehicle you would like see the feedback of: ");
+        			while(vin == null)
+        			{
+        				vin = in.readLine();
+        				try
+        				{
+        					 Integer.parseInt(vin);
+        					 if(!miscH.validVin(vin))
+        					 {
+        						 vin = null;
+        						 System.out.println("Not a valid vin, try again: ");
+        					 }
+        				}
+        				catch (Exception e) 
+        				{
+        					System.out.println("Not a valid vin, try again: ");
+        					vin = null;
+        				}
+        			}
+        			miscH.printUCReviews(vin);
+    				System.out.println("Would you like to rate a feedback? y/n");
+    				while(answer == null)
+    				{
+    					answer = in.readLine();
+    					if(answer.compareTo("y") == 0)
+    					{
+    						System.out.println("Type in the fid of the feedback you would like to review the usefulness of: ");
+    						while(fid == null)
+    						{
+    							fid = in.readLine();
+    						}
+    					}
+    				}
+           		 	rateFBUsefulness(vin, fid, rating);
+        		 }catch(Exception e) {}
         		 break;
         	 case 8: //Review a user
         		 rateOtherUsers();
@@ -528,122 +567,76 @@ public class UserOptions
 	 * Views UUber cars. User picks which car to view feedback of, then has the option of reviewing those feedbacks
 	 * (Usefulness rating)
 	 */
-	public boolean rateFBUsefulness()
+	public boolean rateFBUsefulness(String vin, String fid, String rating )
 	{
 		try 
 		{
 			String sql=null;
-			String vin = null;
-			String fid = null;
-			String rating = null;
-			System.out.println("Type in the vin of the vehicle you would like see the feedback of: ");
-			while(vin == null)
 			{
-				vin = in.readLine();
 				try
 				{
-					 Integer.parseInt(vin);
-					 if(!miscH.validVin(vin))
+					 Integer.parseInt(fid);
+					 sql = "SELECT * FROM Feedback WHERE fid = ? AND vin = ?";
+					 try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 					 {
-						 vin = null;
-						 System.out.println("Not a valid vin, try again: ");
-					 }
+						 pstmt.setString(1,  fid);
+						 pstmt.setString(2, vin);
+						 ResultSet result = pstmt.executeQuery();
+						 if(!result.isBeforeFirst())
+						 {
+							 System.out.println("This fid does not correspond with the selected vehicle. Try again: ");
+							 fid = null;
+						 }
+					} 
 				}
 				catch (Exception e) 
 				{
-					System.out.println("Not a valid vin, try again: ");
-					vin = null;
+					System.out.println("Not a valid fid, try again: ");
+					fid = null;
 				}
-			}
-			if(miscH.printUCReviews(vin))
+			if(!isOwnFeedback(fid))
 			{
-				String answer = null;
-				System.out.println("Would you like to rate a feedback? y/n");
-				while(answer == null)
+				System.out.println("Type in the rating you would like to give to this feedback (0 = useless, 1 = useful, 2 = very useful): ");
+				while(rating == null)
 				{
-					answer = in.readLine();
-					if(answer.compareTo("y") == 0)
+					rating = in.readLine();
+					try
 					{
-						System.out.println("Type in the fid of the feedback you would like to review the usefulness of: ");
-						while(fid == null)
-						{
-							fid = in.readLine();
-							try
-							{
-								 Integer.parseInt(fid);
-								 sql = "SELECT * FROM Feedback WHERE fid = ? AND vin = ?";
-								 try(PreparedStatement pstmt = con.con.prepareStatement(sql))
-								 {
-									 pstmt.setString(1,  fid);
-									 pstmt.setString(2, vin);
-									 ResultSet result = pstmt.executeQuery();
-									 if(!result.isBeforeFirst())
-									 {
-										 System.out.println("This fid does not correspond with the selected vehicle. Try again: ");
-										 fid = null;
-									 }
-								} 
-							}
-							catch (Exception e) 
-							{
-								System.out.println("Not a valid fid, try again: ");
-								fid = null;
-							}
-						}
-						if(!isOwnFeedback(fid))
-						{
-							System.out.println("Type in the rating you would like to give to this feedback (0 = useless, 1 = useful, 2 = very useful): ");
-							while(rating == null)
-							{
-								rating = in.readLine();
-								try
-								{
-									 int ratingInt = Integer.parseInt(rating);
-									 if(ratingInt < 0 | ratingInt > 2)
-									 {
-										 System.out.println("Not a valid rating. Try again: ");
-										 rating = null;
-									 }
-								}
-								catch (Exception e) 
-								{
-									System.out.println("Not a valid rating, try again: ");
-									rating = null;
-								}
-							}
-							sql = "INSERT INTO Rates(login, fid, rating) VALUES(?,?,?)";
-							try(PreparedStatement pstmt = con.con.prepareStatement(sql))
-							{
-								pstmt.setString(1,  userLogin);
-								pstmt.setString(2, fid);
-								pstmt.setString(3, rating);
-								int success = pstmt.executeUpdate();
-								if(success == 1)
-								{
-									System.out.println("You have successfully rated the feedback!\n");
-									return true; // success in rating feedback
-								}
-				
-							} 
-							catch(SQLException e) 
-							{
-								System.out.println("Failed to rate the feedback. You have already rated this.\n");
-							}
-						}
-						else
-							System.out.println("You cannot rate your own feedback!\n");
+						 int ratingInt = Integer.parseInt(rating);
+						 if(ratingInt < 0 | ratingInt > 2)
+						 {
+							 System.out.println("Not a valid rating. Try again: ");
+							 rating = null;
+						 }
 					}
-					else if(answer.compareTo("n") == 0)
+					catch (Exception e) 
 					{
-						break;
-					}
-					else
-					{
-						System.out.println("Not a valid answer. Try again: ");
-						answer = null;
+						System.out.println("Not a valid rating, try again: ");
+						rating = null;
 					}
 				}
+				sql = "INSERT INTO Rates(login, fid, rating) VALUES(?,?,?)";
+				try(PreparedStatement pstmt = con.con.prepareStatement(sql))
+				{
+					pstmt.setString(1,  userLogin);
+					pstmt.setString(2, fid);
+					pstmt.setString(3, rating);
+					int success = pstmt.executeUpdate();
+					if(success == 1)
+					{
+						System.out.println("You have successfully rated the feedback!\n");
+						return true; // success in rating feedback
+					}
+	
+				} 
+				catch(SQLException e) 
+				{
+					System.out.println("Failed to rate the feedback. You have already rated this.\n");
+				}
 			}
+			else
+				System.out.println("You cannot rate your own feedback!\n");
+				}
 		}
 		catch (Exception e) 
 		{
