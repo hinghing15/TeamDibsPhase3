@@ -128,7 +128,7 @@ public class TopAwardsOptions
 					+ "FROM Ride, UC WHERE Ride.vin = UC.vin AND category = ? "
 					+ "GROUP BY UC.vin ORDER BY TotalRides DESC LIMIT ?) as x "
 					+ "WHERE IsCtypes.vin = x.vin AND Ctypes.tid = IsCtypes.tid;";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				for(int i = 0; i < categories.length; i++)
 				{
@@ -177,7 +177,7 @@ public class TopAwardsOptions
 					+ "FROM Ride, UC WHERE Ride.vin = UC.vin AND category = ? "
 					+ "GROUP BY UC.vin ORDER BY avCost DESC LIMIT ?) "
 					+ "as x WHERE IsCtypes.vin = x.vin AND Ctypes.tid = IsCtypes.tid;";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				for(int i = 0; i < categories.length; i++)
 				{
@@ -224,7 +224,7 @@ public class TopAwardsOptions
 		{	
 			String sql = "SELECT UC.login, AVG(score) as avScore FROM UC LEFT OUTER JOIN Feedback ON UC.vin = Feedback.vin WHERE category = ? " + 
 					"GROUP BY UC.login ORDER BY avScore DESC LIMIT ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				for(int i = 0; i < categories.length; i++)
 				{
@@ -323,7 +323,7 @@ public class TopAwardsOptions
 					"SELECT * FROM ((SELECT COUNT(*) as z2, login2 AS l3 FROM Trust WHERE isTrusted = 0 GROUP BY login2) AS L3 RIGHT OUTER JOIN " + 
 					"(SELECT COUNT(*) as o2, login2 AS l4 FROM Trust WHERE isTrusted = 1 GROUP BY login2) AS L4 ON l3 = l4)) AS x, Trust as T1 WHERE T1.login2 = l1 OR T1.login2 = l2 " +
 					"ORDER BY TrustScore DESC LIMIT ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setInt(1, m);
 				ResultSet result = pstmt.executeQuery();
@@ -358,7 +358,7 @@ public class TopAwardsOptions
 		{	
 			String sql = "SELECT AVG(rating) as UsefulnessScore, Feedback.login FROM Feedback, Rates "
 					+ "WHERE Feedback.fid = Rates.fid GROUP BY Feedback.login ORDER BY UsefulnessScore DESC LIMIT ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setInt(1, m);
 				ResultSet result = pstmt.executeQuery();

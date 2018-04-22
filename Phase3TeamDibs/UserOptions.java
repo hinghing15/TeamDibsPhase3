@@ -75,10 +75,24 @@ public class UserOptions
         		 continue;
         	 switch(c) {
         	 case 1: //Register Driver
+        		 try {
+	     			String confirmation = null;
+	    			System.out.println("Confirm you would like to register as an UUber Driver as: ");
+	    			System.out.println("Login: " + userLogin);
+	    			System.out.println("Name: " + userName);
+	    			System.out.println("yes/no?");
+	    			while(true)
+	    			{
+	    				confirmation = in.readLine();
+	    				if(confirmation.equals("yes") || confirmation.equals("no"))
+	    					break;
+	    			}
+        		 }
+        		 catch(Exception e) {}
         		 createDriver();
         		 break;
         	 case 2: //Driver options
-        		 if(isDriver())
+        		 if(isDriver(userLogin))
         		 {
         			 DriverOptions driverOps = new DriverOptions(con, userLogin);
         			 driverOps.selectDriverOp();
@@ -98,7 +112,24 @@ public class UserOptions
         		 if(miscH.printUC())
         		 {
         			 printFavorites();
-        			 addNewFavorite();
+        			try {
+        			String choice1 = null;
+        			System.out.println("Type in the vin of the vehicle you would like to favorite: ");
+        			while(choice1 == null)
+        			{
+        				choice1 = in.readLine();
+        				try
+        				{
+        					 Integer.parseInt(choice1);
+        				}
+        				catch (Exception e) 
+        				{
+        					System.out.println("Not a valid vin, try again: ");
+        					choice1 = null;
+        				}
+        			}
+        			 addNewFavorite(choice1);
+        			}catch(Exception e) {}
         		 }
         		 break;
         	 case 6: //Review a car
@@ -144,7 +175,7 @@ public class UserOptions
 			}
 		}
 		sql = "SELECT * FROM Feedback WHERE login = ?";
-		 try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+		 try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 		 {
 			 pstmt.setString(1,  answer);
 			 ResultSet result = pstmt.executeQuery();
@@ -183,7 +214,7 @@ public class UserOptions
 			}
 			String check = "Select * from Trust t WHERE t.login1 = ? " +
 			"AND t.login2 = ?;";
-			try(PreparedStatement pCheck = con.conn.prepareStatement(check))
+			try(PreparedStatement pCheck = con.con.prepareStatement(check))
 			{
 				pCheck.setString(1, answer);
 				pCheck.setString(2,  userLogin);
@@ -194,7 +225,7 @@ public class UserOptions
 					while(result.next())
 					{
 						sql = "UPDATE Trust t SET t.isTrusted = ? WHERE t.login1 = ? AND t.login2 = ?";
-						try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+						try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 						{
 							pstmt.setString(1, trust);
 							pstmt.setString(2,  answer);
@@ -216,7 +247,7 @@ public class UserOptions
 				else
 				{
 					sql = "INSERT INTO Trust(login1, login2, isTrusted) VALUES(?,?,?)";
-					try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+					try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 					{
 						pstmt.setString(1, answer);
 						pstmt.setString(2,  userLogin);
@@ -249,21 +280,9 @@ public class UserOptions
 		try 
 		{
 			String sql=null;
-			String confirmation = null;
-			System.out.println("Confirm you would like to register as an UUber Driver as: ");
-			System.out.println("Login: " + userLogin);
-			System.out.println("Name: " + userName);
-			System.out.println("yes/no?");
-			while(true)
-			{
-				confirmation = in.readLine();
-				if(confirmation.equals("yes") || confirmation.equals("no"))
-					break;
-			}
-			if(confirmation.equals("yes"))
-			{
+			
 				sql = "INSERT INTO UD(login, name) VALUES(?,?)";
-				try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+				try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 				{
 					pstmt.setString(1,  userLogin);
 					pstmt.setString(2, userName);
@@ -279,7 +298,6 @@ public class UserOptions
 				{
 					System.out.println("Registration failed. You are already registered as a driver\n");
 				}
-			}
 		}
 		catch (Exception e) { /* ignore close errors */ }
 		return false; // failure to create driver
@@ -288,14 +306,14 @@ public class UserOptions
 	/*
 	 * Checks if current active user is a registered driver
 	 */
-	public boolean isDriver()
+	public boolean isDriver(String userLogin)
 	{
 		try 
 		{
 			String sql=null;
 				 
 			sql = "SELECT login FROM UD WHERE login = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1,  userLogin);
 
@@ -315,16 +333,16 @@ public class UserOptions
 	/*
 	 * Prints users favorites
 	 */
-	public void printFavorites()
+	public String printFavorites()
 	{
+		String favList = "";
 		try 
 		{
 			String sql=null;
-			
 			sql = "SELECT Favorites.vin, Favorites.fvdate, UC.category, UC.year, Ctypes.make, Ctypes.model, UC.login "
 					+ "FROM Favorites, UC, Ctypes, IsCtypes "
 					+ "WHERE Favorites.vin = UC.vin AND Favorites.vin = IsCtypes.vin AND IsCtypes.tid = Ctypes.tid AND Favorites.login = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1,  userLogin);
 				ResultSet result = pstmt.executeQuery();
@@ -333,6 +351,12 @@ public class UserOptions
 					System.out.println("Your Favorites: ");
 					while(result.next())
 					{
+						favList += "<b>vin: </b>" + result.getString("vin")
+					    + "<BR><b>Category: </b>" + result.getString("category") 
+						+ "<b>    Make: </b>" + result.getString("make")
+						+ "<b>    Model: </b>" + result.getString("model")
+						+ "<b>    Year: </b>" + result.getString("year")
+						+ "<b>    Owner: </b>" + result.getString("login") + "<BR>";
 						System.out.println("vin: " + result.getString("vin"));
 						System.out.println("\t" + "Category: " + result.getString("category") 
 											+ "    Make: " + result.getString("make")
@@ -352,32 +376,18 @@ public class UserOptions
 		catch (Exception e) 
 		{
 		}
+		return favList;
 	}
 	/*
 	 * Adds car to users favorites
 	 */
-	public boolean addNewFavorite()
+	public boolean addNewFavorite(String choice)
 	{
 		try 
 		{
 			String sql=null;
-			String choice = null;
-			System.out.println("Type in the vin of the vehicle you would like to favorite: ");
-			while(choice == null)
-			{
-				choice = in.readLine();
-				try
-				{
-					 Integer.parseInt(choice);
-				}
-				catch (Exception e) 
-				{
-					System.out.println("Not a valid vin, try again: ");
-					choice = null;
-				}
-			}
 			sql = "INSERT INTO Favorites(vin, login, fvdate) VALUES(?,?,?)";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				java.sql.Timestamp date = new java.sql.Timestamp(new java.util.Date().getTime());
 				pstmt.setString(1,  choice);
@@ -459,7 +469,7 @@ public class UserOptions
 					}
 				}
 				sql = "INSERT INTO Feedback(text, score, vin, login, fbdate) VALUES(?,?,?,?,?)";
-				try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+				try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 				{
 					java.sql.Timestamp date = new java.sql.Timestamp(new java.util.Date().getTime());
 					pstmt.setString(1,  text);
@@ -499,7 +509,7 @@ public class UserOptions
 		try 
 		{		 
 			String sql = "SELECT * FROM Feedback WHERE login = ? AND vin = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1,  userLogin);
 				pstmt.setString(2, vin);
@@ -562,7 +572,7 @@ public class UserOptions
 							{
 								 Integer.parseInt(fid);
 								 sql = "SELECT * FROM Feedback WHERE fid = ? AND vin = ?";
-								 try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+								 try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 								 {
 									 pstmt.setString(1,  fid);
 									 pstmt.setString(2, vin);
@@ -602,7 +612,7 @@ public class UserOptions
 								}
 							}
 							sql = "INSERT INTO Rates(login, fid, rating) VALUES(?,?,?)";
-							try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+							try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 							{
 								pstmt.setString(1,  userLogin);
 								pstmt.setString(2, fid);
@@ -650,7 +660,7 @@ public class UserOptions
 		try 
 		{		 
 			String sql = "SELECT * FROM Feedback WHERE fid = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1, fid);
 				ResultSet result = pstmt.executeQuery();
@@ -759,7 +769,7 @@ public class UserOptions
        				"AND U.vin in (select vin from UC U2 WHERE U2.login in \r\n" + 
        				"(select login from Available A where A.pid in \r\n" + 
        				"(select pid from Period P WHERE P.fromHour <= ? AND P.toHour >= ?)));";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1,  String.valueOf(temp.start));
 				pstmt.setString(2, String.valueOf(temp.end));
@@ -835,7 +845,7 @@ public class UserOptions
 			if(confirmation.equals("yes")) {
 				for(int i = 0; i < records.size(); i++) {
 					String sql = "INSERT INTO Ride(cost, date, login, vin, fromHour, toHour) VALUES(?,?,?,?,?,?)";
-					try(PreparedStatement pstmt2 = con.conn.prepareStatement(sql))
+					try(PreparedStatement pstmt2 = con.con.prepareStatement(sql))
 					{
 						pstmt2.setString(1,  String.valueOf(records.get(i).cost));
 						pstmt2.setString(2, records.get(i).date);
@@ -882,7 +892,7 @@ public class UserOptions
        		temp.start  = -1;
        		temp.end  = -1;
        		String sql = "SELECT * FROM UC";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				ResultSet result = pstmt.executeQuery();
 				if(result.isBeforeFirst())
@@ -964,7 +974,7 @@ public class UserOptions
 								"FROM Reserve R, (select distinct login from Reserve R where\r\n" + 
 								"R.vin = ?) as N WHERE R.login = N.login\r\n" + 
 								"GROUP BY R.vin ORDER BY TotalRides DESC;";
-						try(PreparedStatement similar = con.conn.prepareStatement(sqlDup))
+						try(PreparedStatement similar = con.con.prepareStatement(sqlDup))
 						{
 							similar.setString(1,  String.valueOf(temp.vin));
 							ResultSet result = similar.executeQuery();
@@ -1020,7 +1030,7 @@ public class UserOptions
 			if(confirmation.equals("yes")) {
 				for(int i = 0; i < reservations.size(); i++) {
 					String sql = "INSERT INTO Period(fromHour, toHour) VALUES(?,?)";
-					try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+					try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 					{
 						pstmt.setString(1,  String.valueOf(reservations.get(i).start));
 						pstmt.setString(2, String.valueOf(reservations.get(i).end));
@@ -1031,7 +1041,7 @@ public class UserOptions
 							generatedKeys.next();
 							int pid = generatedKeys.getInt(1);
 							sql = "INSERT INTO Reserve(login, vin, pid, cost, date) VALUES(?,?,?,?,?)";
-							try(PreparedStatement pstmt2 = con.conn.prepareStatement(sql))
+							try(PreparedStatement pstmt2 = con.con.prepareStatement(sql))
 							{
 								pstmt2.setString(1,  userLogin);
 								pstmt2.setString(2, reservations.get(i).vin);
@@ -1044,7 +1054,7 @@ public class UserOptions
 							{
 								System.out.println("Failed to insert into Reserve\n");
 								sql = "DELETE FROM Period" + "WHERE pid = " + String.valueOf(pid);
-								try(PreparedStatement pstmt3 = con.conn.prepareStatement(sql))
+								try(PreparedStatement pstmt3 = con.con.prepareStatement(sql))
 								{
 									pstmt3.executeUpdate();
 								} 

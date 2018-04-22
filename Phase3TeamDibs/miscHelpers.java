@@ -16,15 +16,16 @@ public class miscHelpers
 	/*
 	 * Prints all UUber Cars (vin, category, make, model, year, ower, city/address, average score from feedbacks)
 	 */
-	public boolean printUC()
+	public String printUC()
 	{
+		String ret = "";
 		try 
 		{	
 			String sql = "SELECT UC.vin, category, year, UC.login, make, model, address, s.avScore " + 
 					"FROM Ctypes, IsCtypes, UU, UC, " + 
 					"(SELECT UC.vin, AVG(Feedback.score) as avScore FROM UC LEFT OUTER JOIN Feedback ON UC.vin = Feedback.vin GROUP BY UC.vin) as s " + 
 					"WHERE UC.vin = IsCtypes.vin AND IsCtypes.tid = Ctypes.tid AND UU.login = UC.login AND UC.vin = s.vin"; 
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 
 				ResultSet result = pstmt.executeQuery();
@@ -33,6 +34,14 @@ public class miscHelpers
 					System.out.println("UUber Cars:");
 					while(result.next())
 					{
+						ret += "<b>vin: </b>" + result.getString("vin")
+						+ "<b><BR>Category: </b>" + result.getString("category") 
+						+ "<b>    Make: </b>" + result.getString("make")
+						+ "<b>    Model: </b>" + result.getString("model")
+						+ "<b>    Year: </b>" + result.getString("year")
+						+ "<b>    Owner: </b>" + result.getString("login")
+						+ "<b>    City: </b>" + result.getString("address")
+						+ "<b>    Average Score: </b>" + result.getString("avScore") + "<BR>";
 						System.out.println("vin: " + result.getString("vin"));
 						System.out.println("\t" + "Category: " + result.getString("category") 
 												+ "    Make: " + result.getString("make")
@@ -43,7 +52,6 @@ public class miscHelpers
 												+ "    Average Score: " + result.getString("avScore"));
 					}
 					System.out.println();
-					return true;
 				}
 				else
 				{
@@ -53,7 +61,7 @@ public class miscHelpers
 			catch(SQLException e) {}
 		}
 		catch (Exception e) {}
-		return false;
+		return ret;
 	}
 	/*
 	 * Prints reviews for a selected UUber Car. If there are no cars, return false
@@ -63,7 +71,7 @@ public class miscHelpers
 		try 
 		{
 			String sql = "SELECT * FROM Feedback WHERE vin = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1, vin);
 				ResultSet result = pstmt.executeQuery();
@@ -99,7 +107,7 @@ public class miscHelpers
 		try 
 		{		 
 			String sql = "SELECT * FROM UC WHERE vin = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1, vin);
 				ResultSet result = pstmt.executeQuery();
@@ -122,7 +130,7 @@ public class miscHelpers
 		try 
 		{		 
 			String sql = "SELECT * FROM UU WHERE login = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1, login);
 				ResultSet result = pstmt.executeQuery();
@@ -146,7 +154,7 @@ public class miscHelpers
 		{	
 			String sql = "SELECT login, name, address" + 
 					" FROM UU"; 
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 
 				ResultSet result = pstmt.executeQuery();
@@ -183,7 +191,7 @@ public class miscHelpers
 		{	
 			String sql = "SELECT login" + 
 					" FROM UU"; 
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 
 				ResultSet result = pstmt.executeQuery();

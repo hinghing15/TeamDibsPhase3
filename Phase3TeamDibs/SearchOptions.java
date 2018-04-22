@@ -373,7 +373,7 @@ public class SearchOptions
 		try 
 		{	
 			sql += " ORDER BY s.AvScore DESC";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				for(int i = 0; i < size; i++)
 				{
@@ -505,7 +505,7 @@ public class SearchOptions
 			String sql = "SELECT F1.fid, F1.text, F1.vin, F1.Score, F1.login, AVG(R1.rating) AS avUsefulness "
 					+ "FROM Feedback AS F1, Rates AS R1, UC, UD WHERE UC.login = UD.login AND UC.vin = F1.vin "
 					+ "AND R1.fid = F1.fid AND UD.login = ? GROUP BY F1.fid ORDER BY avUsefulness DESC LIMIT ?;";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1, login);
 				pstmt.setInt(2, m);
@@ -587,7 +587,7 @@ public class SearchOptions
 		{
 			String sql = "SELECT F1.vin, F1.login as login1, F2.login as login2 FROM Favorites AS F1 JOIN Favorites AS F2 "
 					+ "WHERE F1.login != F2.login AND F1.vin = F2.vin AND F1.login = ? AND F2.login = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1, twoUsers[0]);
 				pstmt.setString(2, twoUsers[1]);

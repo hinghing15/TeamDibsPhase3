@@ -13,8 +13,8 @@ public class phase2 {
 	/**
 	 * @param args
 	 */
-	private static String userLogin; //current active user
-	private static String userName; //current active user's name
+	public static String userLogin; //current active user
+	public static String userName; //current active user's name
 	private static BufferedReader in;
 	public static void displayMenu()
 	{
@@ -52,7 +52,27 @@ public class phase2 {
 	            		 continue;
 	            	 if(c==1) //User Registration
 	            	 {
-	            		 if(createUser(con))
+	            		 String login;
+	         			String password;
+	         			String name;
+	         			String address;
+	         			String phoneNum;
+	         			
+	         			System.out.println("Choose a login-name: ");
+	         			while((login = in.readLine()) == null || login.length() == 0);
+	         			
+	         			System.out.println("Choose a password: ");
+	         			while((password = in.readLine()) == null || password.length() == 0);
+	         			
+	         			System.out.println("Enter your name: ");
+	         			while((name = in.readLine()) == null || name.length() == 0);
+	         			
+	         			System.out.println("Enter your city: ");
+	         			while((address = in.readLine()) == null || address.length() == 0);
+	         			
+	         			System.out.println("Enter your phone number: ");
+	         			while((phoneNum = in.readLine()) == null || phoneNum.length() == 0);  
+	            		 if(createUser(con, login, password, name, address, phoneNum))
 	            		 {
 	            			 UserOptions userOp = new UserOptions(con, userLogin, userName);
 	            			 userOp.selectUserOp();
@@ -60,7 +80,15 @@ public class phase2 {
 	            	 }
 	            	 else if(c==2)
 	            	 {
-	            		 if(loginUser(con))
+	            		 String login;
+	         			String password;
+	         			
+	         			System.out.println("Enter your login-name: ");
+	         			while((login = in.readLine()) == null || login.length() == 0);
+	         			
+	         			System.out.println("Enter your password: ");
+	         			while((password = in.readLine()) == null || password.length() == 0);
+	            		 if(loginUser(con, login, password))
 	            		 {
 	            			 UserOptions userOp = new UserOptions(con, userLogin, userName);
 	            			 userOp.selectUserOp();
@@ -103,34 +131,13 @@ public class phase2 {
 	/*
 	 * Creates a new user in the UU table
 	 */
-	public static boolean createUser(Connector2 con)
+	public static boolean createUser(Connector2 con, String login, String password, String name, String address, String phoneNum)
 	{
 		try 
 		{
-			String login;
-			String password;
-			String name;
-			String address;
-			String phoneNum;
-			String sql=null;
-			
-			System.out.println("Choose a login-name: ");
-			while((login = in.readLine()) == null || login.length() == 0);
-			
-			System.out.println("Choose a password: ");
-			while((password = in.readLine()) == null || password.length() == 0);
-			
-			System.out.println("Enter your name: ");
-			while((name = in.readLine()) == null || name.length() == 0);
-			
-			System.out.println("Enter your city: ");
-			while((address = in.readLine()) == null || address.length() == 0);
-			
-			System.out.println("Enter your phone number: ");
-			while((phoneNum = in.readLine()) == null || phoneNum.length() == 0);  
-		 
+ 			String sql=null;
 			sql = "INSERT INTO UU(login, password, name, address, phone) VALUES(?,?,?,?,?)";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1,  login);
 				pstmt.setString(2, password);
@@ -159,23 +166,13 @@ public class phase2 {
 	/*
 	 * Login user
 	 */
-	public static boolean loginUser(Connector2 con)
+	public static boolean loginUser(Connector2 con, String login, String password)
 	{
 		try 
 		{
-			String login;
-			String password;
-
-			String sql=null;
-			
-			System.out.println("Enter your login-name: ");
-			while((login = in.readLine()) == null || login.length() == 0);
-			
-			System.out.println("Enter your password: ");
-			while((password = in.readLine()) == null || password.length() == 0);
 				 
-			sql = "SELECT login, password, name FROM UU WHERE login = ? && password = ?";
-			try(PreparedStatement pstmt = con.conn.prepareStatement(sql))
+			String sql = "SELECT login, password, name FROM UU WHERE login = ? && password = ?";
+			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
 				pstmt.setString(1,  login);
 				pstmt.setString(2, password);
