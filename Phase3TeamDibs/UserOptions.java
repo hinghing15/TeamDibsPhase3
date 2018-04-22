@@ -103,7 +103,8 @@ public class UserOptions
         		 }
         		 break;
         	 case 3: //Reserve a ride
-        		 reserveRide();
+        		 ReserveRideOptions ResOp = new ReserveRideOptions(con, userLogin);
+				 ResOp.selectReserveOp();
         		 break;
         	 case 4: //Record a ride
         		 recordRide();
