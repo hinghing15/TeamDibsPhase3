@@ -24,11 +24,12 @@ public class ReserveRideOptions
 		this.con = con;
 		this.userLogin = userLogin;
 	}
-
+	
 	//Prints out the available cars
 	//if there is at least one available car it returns true
 	//otherwise return false
-	public boolean printAvailableCars() {
+	public String printAvailableCars() {
+		String display = "";
 		String sql = "SELECT * FROM UC";
 		try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 		{
@@ -38,25 +39,28 @@ public class ReserveRideOptions
 				System.out.println("Search results:");
 				while(result.next())
 				{
-					System.out.println("Vin: " + result.getString("vin"));
-					System.out.println("\t" + "Category: " + result.getString("category") 
-											+ "    Year: " + result.getString("year")
+					display += "<BR><b>Vin: </b>" + result.getString("vin") 
+					+ "    <b>Category: </b>" + result.getString("category")
+					+ "    <b>Year: </b>" + result.getString("year") + "<BR>";
 				}
-				System.out.println();
-				return true;
+				return display;
 			}
 			else
 			{
 				System.out.println("There are no cars to be reserved");
-				return false;
+				return display;
 			}
 		} 
+		catch(SQLException e) {
+			return display;
+		}
 	}
 
 	//Given a vin, date, time, we return cars that similar uses picked, also adds
 	//details to reservation list
-	public void SimilarDrivers(String vin, int start, int end, String date) {
-		ReserveObj temp;
+	public String SimilarDrivers(String vin, int start, int end, String date) {
+		String display = "";
+		ReserveObj temp = new ReserveObj();
 		temp.start = start;
 		temp.end = end;
 		temp.date = date;
@@ -78,47 +82,58 @@ public class ReserveRideOptions
 				while(result.next())
 				{
 					if(!result.getString("Owner").equals(temp.vin)) {
-						System.out.println("\t" + "Vin: " + result.getString("Owner"));
+						display += "<BR>Vin: " + result.getString("Owner") + "<BR>";
 					}
 				}
-				System.out.println();
 			}
 		}
 		catch(SQLException e) 
 		{
+			return display;
 		}
+		return display;
 	}
 
+	public int length() {
+		return reservations.size();
+	}
+	
 	//Saves Reservation into database
-	public void DisplayRes() {
+	public String DisplayRes() {
+		String display = "";
 		if(reservations.size() > 0) {
 			int totalCost = 0;
 			String confirmation = "a";
 			System.out.println("Confirm these reservations:");
-			for(int i = 0; i < reservations.size(); i++) {			
-				System.out.println("VIN:" + reservations.get(i).vin);
-				System.out.println("Start Hour:" + String.valueOf(reservations.get(i).start));
-				System.out.println("End Hour:" + String.valueOf(reservations.get(i).end));
-				System.out.println("Date:" + reservations.get(i).date);
-				System.out.println("Cost:" + String.valueOf(reservations.get(i).cost));
+			for(int i = 0; i < reservations.size(); i++) {	
+				display += 				"<BR>VIN: " + reservations.get(i).vin
+				+ "<BR><b>Start Hour: </b>" + String.valueOf(reservations.get(i).start) 
+				+ "    <b>End Hour: </b>" + String.valueOf(reservations.get(i).end)
+				+ "    <b>Date: </b>" + reservations.get(i).date
+				+ "    <b>Cost: </b>" + String.valueOf(reservations.get(i).cost) + "<BR>";
 				totalCost = totalCost + reservations.get(i).cost;
 			}
-			System.out.println("Total Cost: " + String.valueOf(totalCost));
+			display += "<BR>Total Cost: " + String.valueOf(totalCost) + "<BR>";
 			
-			System.out.println("yes/no?");
+			display += "<BR>yes/no?<BR>";
+			return display;
 		}
+		return display;
 	}
 
 	public boolean ConfirmRes() {
 		for(int i = 0; i < reservations.size(); i++) {
 			String sql = "INSERT INTO Period(fromHour, toHour) VALUES(?,?)";
+			System.out.println("Here\n");
 			try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 			{
+				System.out.println("try\n");
 				pstmt.setString(1,  String.valueOf(reservations.get(i).start));
 				pstmt.setString(2, String.valueOf(reservations.get(i).end));
 				int success = pstmt.executeUpdate();
 				if(success == 1)
 				{
+					System.out.println("Success entry\n");
 					ResultSet generatedKeys = pstmt.getGeneratedKeys();
 					generatedKeys.next();
 					int pid = generatedKeys.getInt(1);
@@ -139,6 +154,7 @@ public class ReserveRideOptions
 						try(PreparedStatement pstmt3 = con.con.prepareStatement(sql))
 						{
 							pstmt3.executeUpdate();
+							return false;
 						} 
 						catch(SQLException eR) 
 						{
@@ -147,6 +163,7 @@ public class ReserveRideOptions
 						}
 					}
 				}
+		
 			} 
 			catch(SQLException e) 
 			{
@@ -155,8 +172,6 @@ public class ReserveRideOptions
 			}
 		}
 		return true;
+		
 	}
-
-//----------------------------------------OLD CODE----------------------------------------//
-	
 }

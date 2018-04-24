@@ -21,7 +21,12 @@
 		<input type=hidden name = "userLogin" value="<%=userLogin%>">
 		</form>
 
+		<%--Reserve Options--%>
+		<form name = "ResCar" method="get" action="ReserveCar.jsp"> 
 		</b><BR><BR><input type="Submit" name = "reserveButton" value="Reserve a ride" />
+		<input type=hidden name = "userLogin" value="<%=userLogin%>">
+		</form>
+		
 		</b><BR><BR><input type="Submit" name = "recordButton" value="Record a ride" />
 
 		<%--Favorite Cars--%>
@@ -81,6 +86,10 @@
 		if(viewButton != null)
 		{
 			response.sendRedirect("UsefulnessRating.jsp?userLogin=" + userLogin);
+		}
+		if(reserveButton != null)
+		{
+			response.sendRedirect("ReserveCar.jsp?userLogin=" + userLogin);
 		}
 	}
 	else

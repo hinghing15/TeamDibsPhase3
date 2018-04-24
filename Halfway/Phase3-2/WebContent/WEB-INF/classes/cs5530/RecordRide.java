@@ -12,51 +12,70 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReserveRideOptions
+public class RecordRide
 {
 	private Connector2 con;
 	private BufferedReader in;
 	private String userLogin;
-	List<ReserveObj> reservations = new ArrayList<ReserveObj>();
-	public ReserveRideOptions(Connector2 con, String userLogin)
+	List<String> allowedVins = new ArrayList<String>();
+	public RecordRide(Connector2 con, String userLogin)
 	{
 		in = new BufferedReader(new InputStreamReader(System.in));
 		this.con = con;
 		this.userLogin = userLogin;
 	}
-
+	
 	//Prints out the available cars
 	//if there is at least one available car it returns true
 	//otherwise return false
-	public boolean printAvailableCars() {
-		String sql = "SELECT * FROM UC";
+	public String printAvailableCars() {
+		String returnItem = "";
+		String sql = "select * from UC U WHERE U.vin NOT IN \r\n" + 
+   				"(select vin from Ride R WHERE (R.fromHour >= ? AND R.fromHour <= ? AND R.date = ?) OR (R.toHour >= ? AND R.toHour <= ? AND R.date = ?))\r\n" + 
+   				"AND U.vin in (select vin from UC U2 WHERE U2.login in \r\n" + 
+   				"(select login from Available A where A.pid in \r\n" + 
+   				"(select pid from Period P WHERE P.fromHour <= ? AND P.toHour >= ?)));";
 		try(PreparedStatement pstmt = con.con.prepareStatement(sql))
 		{
+			pstmt.setString(1,  String.valueOf(temp.start));
+			pstmt.setString(2, String.valueOf(temp.end));
+			pstmt.setString(3, temp.date);
+			pstmt.setString(4, String.valueOf(temp.start));
+			pstmt.setString(5, String.valueOf(temp.end));
+			pstmt.setString(6, temp.date);
+			pstmt.setString(7, String.valueOf(temp.start));
+			pstmt.setString(8, String.valueOf(temp.end));
 			ResultSet result = pstmt.executeQuery();
 			if(result.isBeforeFirst())
 			{
 				System.out.println("Search results:");
 				while(result.next())
 				{
-					System.out.println("Vin: " + result.getString("vin"));
-					System.out.println("\t" + "Category: " + result.getString("category") 
-											+ "    Year: " + result.getString("year")
+					System.out.println("vin: " + result.getString("vin"));
+					System.out.println("\t" + "Category: " + result.getString("category")
+											+ "    Year: " + result.getString("year"));
+					allowedVins.add(result.getString("vin"));
 				}
 				System.out.println();
-				return true;
 			}
 			else
 			{
-				System.out.println("There are no cars to be reserved");
+				System.out.println("There are no cars available");
 				return false;
 			}
 		} 
+		catch(SQLException e) {
+			System.out.println("Fail");
+			return false;
+		}
+		return true;
 	}
 
 	//Given a vin, date, time, we return cars that similar uses picked, also adds
 	//details to reservation list
-	public void SimilarDrivers(String vin, int start, int end, String date) {
-		ReserveObj temp;
+	public String SimilarDrivers(String vin, int start, int end, String date) {
+		String display = "";
+		ReserveObj temp = new ReserveObj();
 		temp.start = start;
 		temp.end = end;
 		temp.date = date;
@@ -78,35 +97,39 @@ public class ReserveRideOptions
 				while(result.next())
 				{
 					if(!result.getString("Owner").equals(temp.vin)) {
-						System.out.println("\t" + "Vin: " + result.getString("Owner"));
+						display += "<BR>Vin: " + result.getString("Owner") + "<BR>";
 					}
 				}
-				System.out.println();
 			}
 		}
 		catch(SQLException e) 
 		{
+			return display;
 		}
+		return display;
 	}
 
 	//Saves Reservation into database
-	public void DisplayRes() {
+	public String DisplayRes() {
+		String display = "";
 		if(reservations.size() > 0) {
 			int totalCost = 0;
 			String confirmation = "a";
 			System.out.println("Confirm these reservations:");
-			for(int i = 0; i < reservations.size(); i++) {			
-				System.out.println("VIN:" + reservations.get(i).vin);
-				System.out.println("Start Hour:" + String.valueOf(reservations.get(i).start));
-				System.out.println("End Hour:" + String.valueOf(reservations.get(i).end));
-				System.out.println("Date:" + reservations.get(i).date);
-				System.out.println("Cost:" + String.valueOf(reservations.get(i).cost));
+			for(int i = 0; i < reservations.size(); i++) {	
+				display += 				"<BR>VIN: " + reservations.get(i).vin
+				+ "<BR><b>Start Hour: </b>" + String.valueOf(reservations.get(i).start) 
+				+ "    <b>End Hour: </b>" + String.valueOf(reservations.get(i).end)
+				+ "    <b>Date: </b>" + reservations.get(i).date
+				+ "    <b>Cost: </b>" + String.valueOf(reservations.get(i).cost) + "<BR>";
 				totalCost = totalCost + reservations.get(i).cost;
 			}
-			System.out.println("Total Cost: " + String.valueOf(totalCost));
+			display += "<BR>Total Cost: " + String.valueOf(totalCost) + "<BR>";
 			
-			System.out.println("yes/no?");
+			display += "<BR>yes/no?<BR>";
+			return display;
 		}
+		return display;
 	}
 
 	public boolean ConfirmRes() {
@@ -156,7 +179,4 @@ public class ReserveRideOptions
 		}
 		return true;
 	}
-
-//----------------------------------------OLD CODE----------------------------------------//
-	
 }
